@@ -44,7 +44,7 @@
         
         const html = await res.text();
 
-        // 2. Parse du HTML et recherche du JSON-LD
+        // 2. P
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, "text/html");
         const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
