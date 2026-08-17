@@ -2,43 +2,110 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Cuisine Assist</title>
-  
-  <link rel="manifest" href="manifest.json">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  
-  <!-- Script pour lire les animations Lottie -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/dotlottie-player/2.7.12/dotlottie-player.mjs" type="module"></script>
-  
-  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Parsing Recette</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; background: #f8fafc; color: #1e293b; }
-    input, button { padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #cbd5e1; }
-    button { background: #0ea5e9; color: white; border: none; font-weight: bold; }
-    .card { background: white; padding: 15px; border-radius: 12px; margin-top: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .ingredient-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 18px; }
-    .icon { width: 32px; height: 32px; object-fit: contain; }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 15px; background: #0f172a; color: #f8fafc; }
+    input, button { width: 100%; padding: 12px; margin: 6px 0; font-size: 15px; border-radius: 8px; box-sizing: border-box; }
+    input { background: #1e293b; border: 1px solid #334155; color: white; }
+    button { background: #2563eb; color: white; border: none; font-weight: bold; cursor: pointer; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px; margin-top: 12px; }
+    .tag { display: inline-block; background: #0284c7; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-right: 5px; }
+    ul, ol { padding-left: 20px; }
+    li { margin-bottom: 8px; line-height: 1.4; }
   </style>
 </head>
 <body>
 
-  <h1>Cuisine Assist</h1>
+  <h3>Test Extraction Recette</h3>
 
-  <!-- Formulaire de recherche -->
-  <div style="display: flex; flex-direction: column; gap: 10px;">
-    <input type="text" id="recipeUrl" placeholder="Colle le lien Marmiton ici">
-    <div style="display: flex; gap: 10px; align-items: center;">
-      <label>Convives :</label>
-      <input type="number" id="nbPersonnes" value="2" style="width: 60px;">
-      <button onclick="chargerRecette()" style="flex-grow: 1;">Lancer</button>
-    </div>
+  <input type="text" id="targetUrl" value="https://www.marmiton.org/recettes/recette_fondue-de-poireaux_17316.aspx">
+  
+  <div style="display: flex; gap: 10px;">
+    <input type="number" id="nbPersonnes" value="2" style="width: 80px;" placeholder="Pers.">
+    <button onclick="extraireRecette()">Tester le parsing</button>
   </div>
 
-  <!-- Zone où la recette va s'afficher -->
-  <div id="resultat"></div>
+  <div id="output"></div>
 
-  <!-- On charge notre script JS -->
-  <script src="app.js"></script>
+  <script>
+    const output = document.getElementById("output");
+
+    async function extraireRecette() {
+      const url = document.getElementById("targetUrl").value.trim();
+      const nbPers = parseInt(document.getElementById("nbPersonnes").value) || 2;
+      output.innerHTML = "<p>⏳ Récupération et analyse...</p>";
+
+      try {
+        // 1. Appel du proxy validé
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+        const res = await fetch(proxyUrl);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        
+        const html = await res.text();
+
+        // 2. Parse du HTML et recherche du JSON-LD
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+        const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+
+        let recipe = null;
+
+        scripts.forEach(s => {
+          try {
+            const json = JSON.parse(s.textContent);
+            if (json["@type"] === "Recipe") recipe = json;
+            if (Array.isArray(json)) recipe = json.find(i => i["@type"] === "Recipe") || recipe;
+            if (json["@graph"] && Array.isArray(json["@graph"])) {
+              recipe = json["@graph"].find(i => i["@type"] === "Recipe") || recipe;
+            }
+          } catch (e) {}
+        });
+
+        if (!recipe) throw new Error("Balise Schema.org Recipe introuvable dans la page.");
+
+        // 3. Calcul des ratios
+        const baseYield = parseInt(recipe.recipeYield) || 4;
+        const ratio = nbPers / baseYield;
+
+        // Ingrédients recalculés
+        const ingredients = (recipe.recipeIngredient || []).map(ing => {
+          return ing.replace(/(\d+([\.,]\d+)?)/g, m => {
+            const v = parseFloat(m.replace(',', '.'));
+            return (Math.round(v * ratio * 10) / 10).toString().replace('.', ',');
+          });
+        });
+
+        // Étapes
+        let steps = [];
+        if (Array.isArray(recipe.recipeInstructions)) {
+          steps = recipe.recipeInstructions.map(s => typeof s === "string" ? s : (s.text || ""));
+        } else if (typeof recipe.recipeInstructions === "string") {
+          steps = [recipe.recipeInstructions];
+        }
+
+        // 4. Rendu visuel propre
+        output.innerHTML = `
+          <div class="card">
+            <h2>${recipe.name}</h2>
+            <p><span class="tag">Base : ${baseYield} pers.</span> <span class="tag">Calculé pour : ${nbPers} pers.</span></p>
+            
+            <h3>Ingrédients (${ingredients.length}) :</h3>
+            <ul>
+              ${ingredients.map(ing => `<li>${ing}</li>`).join("")}
+            </ul>
+
+            <h3>Étapes (${steps.length}) :</h3>
+            <ol>
+              ${steps.map(step => `<li>${step}</li>`).join("")}
+            </ol>
+          </div>
+        `;
+
+      } catch (err) {
+        output.innerHTML = `<div class="card" style="border-color: #ef4444; color: #f87171;"><strong>Erreur :</strong> ${err.message}</div>`;
+      }
+    }
+  </script>
 </body>
 </html>
