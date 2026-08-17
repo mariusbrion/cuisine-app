@@ -1,1 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Cuisine Assist</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  
+  <!-- Script pour lire les animations Lottie -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dotlottie-player/2.7.12/dotlottie-player.mjs" type="module"></script>
+  
+  <!-- Style minimaliste et lisible -->
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 20px; background: #f8fafc; color: #1e293b; }
+    input, button { padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #cbd5e1; }
+    button { background: #0ea5e9; color: white; border: none; font-weight: bold; }
+    .card { background: white; padding: 15px; border-radius: 12px; margin-top: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .ingredient-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 18px; }
+    .icon { width: 32px; height: 32px; object-fit: contain; }
+  </style>
+</head>
+<body>
 
+  <h1>Cuisine Assist</h1>
+
+  <!-- Formulaire de recherche -->
+  <div style="display: flex; flex-direction: column; gap: 10px;">
+    <input type="text" id="recipeUrl" placeholder="Colle le lien Marmiton ici">
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <label>Convives :</label>
+      <input type="number" id="nbPersonnes" value="2" style="width: 60px;">
+      <button onclick="chargerRecette()" style="flex-grow: 1;">Lancer</button>
+    </div>
+  </div>
+
+  <!-- Zone où la recette va s'afficher -->
+  <div id="resultat"></div>
+
+  <!-- On charge notre script JS -->
+  <script src="app.js"></script>
+</body>
+</html>
