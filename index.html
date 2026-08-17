@@ -2,131 +2,247 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Cuisine Assist</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Cuisine</title>
   
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   
-  <!-- Lecteur Lottie pour  animations -->
+  <!-- Lecteur Lottie -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dotlottie-player/2.7.12/dotlottie-player.mjs" type="module"></script>
 
   <style>
-    * { box-sizing: border-box; }
+    :root {
+      --bg: #fbf9f4;
+      --card-bg: #ffffff;
+      --text-main: #232220;
+      --text-muted: #82807a;
+      --accent: #1c1b18;
+      --accent-soft: #f2efe9;
+      --border: rgba(0, 0, 0, 0.05);
+      --shadow-sm: 0 2px 8px rgba(35, 34, 32, 0.04);
+      --shadow-md: 0 10px 30px rgba(35, 34, 32, 0.06);
+      --radius-lg: 24px;
+      --radius-md: 18px;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
     body { 
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif; 
       margin: 0; 
-      padding: 16px; 
-      background: #0f172a; 
-      color: #f8fafc; 
-      min-height: 100vh;
+      padding: max(20px, env(safe-area-inset-top)) 20px max(40px, env(safe-area-inset-bottom)); 
+      background: var(--bg); 
+      color: var(--text-main); 
+      -webkit-font-smoothing: antialiased;
     }
-    h1, h2, h3 { margin-top: 0; }
-    input, button { 
-      padding: 12px 14px; 
-      font-size: 16px; 
-      border-radius: 10px; 
-      border: 1px solid #334155; 
-      background: #1e293b; 
-      color: white; 
+
+    /* Typo & Titres */
+    h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.8px; margin: 0 0 24px; }
+    h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; margin: 0 0 16px; }
+    h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 600; color: var(--text-muted); margin: 32px 0 16px; }
+
+    /* Entrées & Boutons */
+    .search-box {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      padding: 8px 8px 8px 18px;
+      display: flex;
+      align-items: center;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border);
+      gap: 10px;
     }
-    button { 
-      background: #0284c7; 
-      border: none; 
-      font-weight: 600; 
-      cursor: pointer; 
+    input[type="text"] {
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 17px;
+      color: var(--text-main);
+      flex: 1;
     }
-    button:active { opacity: 0.8; }
-    .card { 
-      background: #1e293b; 
-      border: 1px solid #334155; 
-      border-radius: 12px; 
-      padding: 16px; 
-      margin-bottom: 16px; 
+    .stepper {
+      display: flex;
+      align-items: center;
+      background: var(--accent-soft);
+      border-radius: 30px;
+      padding: 4px 10px;
+      font-weight: 600;
+      font-size: 14px;
     }
-    .badge { 
-      display: inline-block; 
-      background: #0369a1; 
-      color: #e0f2fe; 
-      padding: 4px 10px; 
-      border-radius: 6px; 
-      font-size: 13px; 
-      font-weight: 500; 
-      margin-right: 6px; 
-      margin-bottom: 6px;
+    .stepper input {
+      border: none;
+      background: transparent;
+      width: 32px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      outline: none;
     }
-    .badge-diff { background: #334155; color: #cbd5e1; }
-    
-    /* Grille de résultats de recherche */
-    .result-item {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      padding: 14px;
-      margin-bottom: 10px;
+    .btn-action {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 12px 20px;
+      font-size: 15px;
+      font-weight: 600;
       cursor: pointer;
-      transition: border-color 0.2s;
+      transition: transform 0.15s ease, opacity 0.15s ease;
     }
-    .result-item:active { border-color: #38bdf8; background: #243248; }
-    .result-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+    .btn-action:active { transform: scale(0.97); opacity: 0.9; }
 
-    /* Lignes d'ingrédients */
-    .ingredient-item { 
-      display: flex; 
-      align-items: center; 
-      gap: 12px; 
-      padding: 8px 0; 
-      border-bottom: 1px solid #334155; 
-      font-size: 16px; 
+    /* Liste des résultats de recherche */
+    .result-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.15s ease;
     }
-    .ingredient-icon { width: 34px; height: 34px; object-fit: contain; flex-shrink: 0; }
-    .bullet { width: 34px; text-align: center; color: #94a3b8; font-size: 20px; }
+    .result-card:active { transform: scale(0.98); }
+    .result-title { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; margin-bottom: 6px; }
+    .meta-tag { font-size: 13px; color: var(--text-muted); font-weight: 500; }
 
-    /* Étapes et animations */
+    /* Fiche Recette Header */
+    .recipe-header { margin-bottom: 24px; }
+    .recipe-title { font-size: 28px; font-weight: 700; letter-spacing: -0.6px; margin: 12px 0 6px; line-height: 1.2; }
+    .recipe-sub { font-size: 14px; color: var(--text-muted); font-weight: 500; }
+
+    /* Grille des Ingrédients épurée */
+    .ingredients-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+      gap: 12px;
+    }
+    .ingredient-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-md);
+      padding: 18px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+    }
+    .ingredient-icon {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+      margin-bottom: 10px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.04));
+    }
+    .ingredient-text {
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.3;
+      color: var(--text-main);
+      word-break: break-word;
+    }
+
+    /* Cartes des Étapes */
     .step-card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      padding: 16px;
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      padding: 24px;
       margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
     }
-    .step-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .step-title { font-size: 17px; font-weight: bold; color: #38bdf8; }
-    .step-body { font-size: 16px; line-height: 1.5; margin-bottom: 12px; }
-    .step-animation { display: flex; justify-content: center; margin: 10px 0; }
-    .step-sprites { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-    
-    .btn-secondary { background: #334155; color: white; width: 100%; margin-top: 10px; }
+    .step-index {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .step-text {
+      font-size: 17px;
+      line-height: 1.5;
+      font-weight: 400;
+      color: var(--text-main);
+    }
+    .step-media {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 16px 0 10px;
+    }
+    .step-sprites {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--accent-soft);
+    }
+    .step-sprite-icon {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+    }
+
+    .btn-back {
+      background: none;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 0;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
   </style>
 </head>
 <body>
 
-  <!-- ÉCRAN 1 : RECHERCHE -->
+  <!-- VUE 1 : RECHERCHE -->
   <div id="searchView">
-    <h2>Recherche Recette</h2>
-    <div style="display: flex; flex-direction: column; gap: 10px;">
-      <input type="text" id="queryInput" placeholder="Ex: tarte au poireau, curry...">
-      <div style="display: flex; gap: 10px; align-items: center;">
-        <label style="font-size: 14px; color: #94a3b8;">Convives :</label>
-        <input type="number" id="nbPersonnes" value="2" style="width: 70px; text-align: center;">
-        <button onclick="chercherRecettes()" style="flex-grow: 1;">Rechercher</button>
+    <h1>Cuisine</h1>
+    
+    <div class="search-box">
+      <input type="text" id="queryInput" placeholder="Tarte poireaux, gâteau..." autocomplete="off">
+      <div class="stepper">
+        <span style="color: var(--text-muted); font-size: 12px;">Pers.</span>
+        <input type="number" id="nbPersonnes" value="2" min="1" max="20">
       </div>
+      <button onclick="chercherRecettes()" class="btn-action">Go</button>
     </div>
 
-    <div id="searchResults" style="margin-top: 20px;"></div>
+    <div id="searchResults" style="margin-top: 32px;"></div>
   </div>
 
-  <!-- ÉCRAN 2 : VUE DÉTAILLÉE DE LA RECETTE -->
+  <!-- VUE 2 : FICHE RECETTE -->
   <div id="recipeView" style="display: none;">
-    <button onclick="retourRecherche()" class="btn-secondary" style="margin-bottom: 16px;">← Retour à la recherche</button>
+    <button onclick="retourRecherche()" class="btn-back">← Retour</button>
     <div id="recipeContent"></div>
   </div>
 
   <script>
-    // 1. Dictionnaire d'assets (exactement selon tes fichiers dans /assets)
+    // Mapping des assets
     const ASSETS = {
       ingredients: {
+        "chocolat": "chocolat.png",
+        "beurre": "beurre.png",
+        "oeuf": "oeuf.png",
+        "œuf": "oeuf.png",
+        "œufs": "oeuf.png",
+        "oeufs": "oeuf.png",
+        "sucre": "sucre.png",
         "ail": "ail.png",
         "amande": "amande.png",
         "aubergine": "aubergine.png",
@@ -156,6 +272,7 @@
         "revenir": "poele.json",
         "dorer": "poele.json",
         "poêler": "poele.json",
+        "fondre": "poele.json",
         "chauffer": "poele.json",
         "mélanger": "touillage.json",
         "remuer": "touillage.json",
@@ -165,23 +282,32 @@
       }
     };
 
-    // 2. Recherche sur Marmiton via corsproxy.io
+    // Détection stricte d'un mot pour éviter les faux positifs (ex: "eau" dans "plateau")
+    function matchIngredientStrict(textLower, key) {
+      if (key === "eau") {
+        return /\b(eau|l'eau|d'eau)\b/i.test(textLower);
+      }
+      if (key === "lait") {
+        return /\b(lait)\b/i.test(textLower);
+      }
+      return textLower.includes(key);
+    }
+
     async function chercherRecettes() {
       const q = document.getElementById("queryInput").value.trim();
       const resultsDiv = document.getElementById("searchResults");
       if (!q) return;
 
-      resultsDiv.innerHTML = "<p>🔍 Recherche des meilleures recettes...</p>";
+      resultsDiv.innerHTML = `<p style="color: var(--text-muted); font-size: 15px;">Recherche en cours...</p>`;
 
       try {
         const searchUrl = `https://www.marmiton.org/recettes/recherche.aspx?aqt=${encodeURIComponent(q)}`;
         const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(searchUrl)}`);
-        if (!res.ok) throw new Error("Erreur de connexion au proxy");
+        if (!res.ok) throw new Error("Connexion impossible");
 
         const html = await res.text();
         const doc = new DOMParser().parseFromString(html, "text/html");
 
-        // Extraction des cartes de recettes
         const links = Array.from(doc.querySelectorAll('a[href*="/recettes/recette_"]'));
         const recipes = [];
         const seenUrls = new Set();
@@ -191,10 +317,8 @@
           if (!href.startsWith("http")) href = `https://www.marmiton.org${href}`;
           if (seenUrls.has(href)) continue;
 
-          // Recherche du titre et des badges texte
           const card = a.closest("div") || a;
           const title = a.querySelector("h4")?.textContent?.trim() || a.getAttribute("title") || a.textContent?.trim();
-          
           if (!title || title.length < 4) continue;
           seenUrls.add(href);
 
@@ -203,37 +327,35 @@
           const diffMatch = cardText.match(/(très facile|facile|moyen|difficile)/i);
 
           recipes.push({
-            title: title.replace(/\s+/g, ' ').substring(0, 75),
+            title: title.replace(/\s+/g, ' ').substring(0, 65),
             url: href,
             time: timeMatch ? timeMatch[0] : "30 min",
             diff: diffMatch ? diffMatch[0] : "Facile"
           });
 
-          if (recipes.length >= 3) break; // On limite à 3 résultats
+          if (recipes.length >= 3) break;
         }
 
         if (recipes.length === 0) {
-          resultsDiv.innerHTML = "<p>Aucune recette trouvée pour cette recherche.</p>";
+          resultsDiv.innerHTML = `<p style="color: var(--text-muted);">Aucune recette trouvée.</p>`;
           return;
         }
 
-        // Rendu des 3 résultats
-        resultsDiv.innerHTML = `<h3>Choisis une recette :</h3>` + recipes.map((r, i) => `
-          <div class="result-item" onclick="ouvrirRecette('${encodeURIComponent(r.url)}')">
-            <div class="result-title">${r.title}</div>
+        resultsDiv.innerHTML = `<h3>Suggestions</h3>` + recipes.map(r => `
+          <div class="result-card" onclick="ouvrirRecette('${encodeURIComponent(r.url)}')">
             <div>
-              <span class="badge">⏱ ${r.time}</span>
-              <span class="badge badge-diff">★ ${r.diff}</span>
+              <div class="result-title">${r.title}</div>
+              <div class="meta-tag">${r.time} • ${r.diff}</div>
             </div>
+            <div style="font-size: 18px; color: var(--text-muted);">→</div>
           </div>
         `).join("");
 
       } catch (err) {
-        resultsDiv.innerHTML = `<p style="color: #f87171;">Erreur : ${err.message}</p>`;
+        resultsDiv.innerHTML = `<p style="color: #e05252;">Erreur : ${err.message}</p>`;
       }
     }
 
-    // 3. Récupération et parsing de la recette sélectionnée
     async function ouvrirRecette(encodedUrl) {
       const url = decodeURIComponent(encodedUrl);
       const nbPers = parseInt(document.getElementById("nbPersonnes").value) || 2;
@@ -243,7 +365,8 @@
 
       searchView.style.display = "none";
       recipeView.style.display = "block";
-      recipeContent.innerHTML = "<p>⏳ Préparation de la fiche recette...</p>";
+      window.scrollTo(0, 0);
+      recipeContent.innerHTML = `<p style="color: var(--text-muted); font-size: 15px; margin-top: 20px;">Préparation de la fiche...</p>`;
 
       try {
         const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
@@ -264,17 +387,20 @@
           } catch (e) {}
         });
 
-        if (!recipe) throw new Error("Données de recette introuvables.");
+        if (!recipe) throw new Error("Fiche introuvable");
 
         const baseYield = parseInt(recipe.recipeYield) || 4;
         const ratio = nbPers / baseYield;
 
-        // Recalcul des ingrédients + matching sprite
+        // Ingrédients
         const ingredients = (recipe.recipeIngredient || []).map(raw => {
           const lower = raw.toLowerCase();
           let icon = null;
           for (const [k, f] of Object.entries(ASSETS.ingredients)) {
-            if (lower.includes(k)) { icon = f; break; }
+            if (matchIngredientStrict(lower, k)) {
+              icon = f;
+              break;
+            }
           }
           const scaled = raw.replace(/(\d+([\.,]\d+)?)/g, m => {
             const v = parseFloat(m.replace(',', '.'));
@@ -283,7 +409,7 @@
           return { text: scaled, icon };
         });
 
-        // Étapes + matching animation & sprites cités
+        // Étapes
         let rawSteps = [];
         if (Array.isArray(recipe.recipeInstructions)) rawSteps = recipe.recipeInstructions;
         else if (recipe.recipeInstructions) rawSteps = [recipe.recipeInstructions];
@@ -292,16 +418,16 @@
           const text = (typeof s === "string" ? s : (s.text || "")).trim();
           const lower = text.toLowerCase();
 
-          // Animation action
+          // Animation
           let anim = null;
           for (const [k, f] of Object.entries(ASSETS.actions)) {
             if (lower.includes(k)) { anim = f; break; }
           }
 
-          // Sprites concernés par l'étape
+          // Sprites
           const stepSprites = [];
           for (const [k, f] of Object.entries(ASSETS.ingredients)) {
-            if (lower.includes(k) && !stepSprites.includes(f)) {
+            if (matchIngredientStrict(lower, k) && !stepSprites.includes(f)) {
               stepSprites.push(f);
             }
           }
@@ -309,52 +435,48 @@
           return { index: idx + 1, text, anim, stepSprites };
         });
 
-        // 4. Rendu visuel de la fiche recette
+        // Rendu final
         recipeContent.innerHTML = `
-          <div class="card">
-            <h2>${recipe.name}</h2>
-            <div>
-              <span class="badge">Pour ${nbPers} personnes</span>
-              <span class="badge badge-diff">Base : ${baseYield} pers.</span>
-            </div>
+          <div class="recipe-header">
+            <div class="recipe-title">${recipe.name}</div>
+            <div class="recipe-sub">Dosé pour ${nbPers} personnes</div>
           </div>
 
-          <div class="card">
-            <h3>Ingrédients (${ingredients.length})</h3>
+          <h3>Ingrédients</h3>
+          <div class="ingredients-grid">
             ${ingredients.map(ing => `
-              <div class="ingredient-item">
+              <div class="ingredient-card">
                 ${ing.icon 
                   ? `<img src="assets/${ing.icon}" class="ingredient-icon" alt="">` 
-                  : `<span class="bullet">•</span>`}
-                <div>${ing.text}</div>
+                  : `<div style="height: 44px; display:flex; align-items:center; color: var(--text-muted); font-size: 20px;">•</div>`}
+                <div class="ingredient-text">${ing.text}</div>
               </div>
             `).join("")}
           </div>
 
-          <h3>Préparation étape par étape</h3>
+          <h3>Préparation</h3>
           ${steps.map(step => `
             <div class="step-card">
-              <div class="step-header">
-                <span class="step-title">Étape ${step.index}</span>
-              </div>
-              <div class="step-body">${step.text}</div>
+              <div class="step-index">Étape ${step.index}</div>
               
               ${step.anim ? `
-                <div class="step-animation">
+                <div class="step-media">
                   <dotlottie-player 
                     src="assets/${step.anim}" 
                     background="transparent" 
                     speed="1" 
-                    style="width: 120px; height: 120px;" 
+                    style="width: 140px; height: 140px;" 
                     loop 
                     autoplay>
                   </dotlottie-player>
                 </div>
               ` : ''}
 
+              <div class="step-text">${step.text}</div>
+
               ${step.stepSprites.length > 0 ? `
                 <div class="step-sprites">
-                  ${step.stepSprites.map(spr => `<img src="assets/${spr}" class="ingredient-icon" title="Ingrédient">`).join("")}
+                  ${step.stepSprites.map(spr => `<img src="assets/${spr}" class="step-sprite-icon" alt="">`).join("")}
                 </div>
               ` : ''}
             </div>
@@ -362,13 +484,14 @@
         `;
 
       } catch (err) {
-        recipeContent.innerHTML = `<p style="color: #f87171;">Erreur lors du chargement : ${err.message}</p>`;
+        recipeContent.innerHTML = `<p style="color: #e05252;">Erreur : ${err.message}</p>`;
       }
     }
 
     function retourRecherche() {
       document.getElementById("recipeView").style.display = "none";
       document.getElementById("searchView").style.display = "block";
+      window.scrollTo(0, 0);
     }
   </script>
 </body>
